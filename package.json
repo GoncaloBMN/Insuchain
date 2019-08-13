@@ -1,0 +1,30 @@
+{
+  "name": "insuchain-0.4",
+  "version": "1.0.0",
+  "description": "Insuchain contracts",
+  "main": "src/blockchain.js",
+  "dependencies": {
+    "crypto-js": "3.1.9-1",
+    "elliptic": "6.5.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoncaloBMN/Insuchain.git"
+  },
+  "keywords": [
+    "insuchain",
+    "insurance",
+    "blockchain",
+    "contracts"
+  ],
+  "author": "Gonçalo de B. M. Nabais <g.nabais@campus.fct.unl.pt>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/GoncaloBMN/Insuchain/issues"
+  },
+  "homepage": "https://github.com/GoncaloBMN/Insuchain#readme"
+}
