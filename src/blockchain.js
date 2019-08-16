@@ -16,6 +16,8 @@ class Contract {
         this.num_vehicles = 0;   //Number of vehicles to insure
         this.vehicles = []; //List of vehicles to cover in the policy
         this.drivers = [];  //List of drivers
+        this.premium = 0;
+        this.timestamp = new Date();
     }
 
     /** CALCULATE HASH
@@ -24,7 +26,8 @@ class Contract {
      * @returns {string}
      */
     calculateHash() {
-        return sha256(this.policyID + this.acta + JSON.stringify(this.insurer) + JSON.stringify(this.beneficiary) + this.num_vehicles + JSON.stringify(this.vehicles) + JSON.stringify(this.drivers)).toString();
+        return sha256(this.policyID + this.acta + JSON.stringify(this.insurer) + JSON.stringify(this.beneficiary) + this.num_vehicles + 
+        JSON.stringify(this.vehicles) + JSON.stringify(this.drivers) + this.premium + this.timestamp).toString();
     }
 
     /** VEHICLES[] EMPTY
@@ -258,6 +261,16 @@ class Contract {
         return this.drivers.splice(index, 1);
     }
 
+    /** SET PREMIUM
+     * Sets the premium of the contract
+     * 
+     * @param {number} premium
+     * 
+     */
+    setPremium(premium) {
+        this.premium = premium;
+    }
+
     /** GET POLICY ID
      * Returns the policy ID of current contract
      * 
@@ -283,8 +296,8 @@ class Contract {
 
         // Calculate the hash of this contract, sign it with the key
         // and store it inside the contract obect
-        const hashCtrt = this.calculateHash();
-        const sig = signingKey.sign(hashCtrt, 'base64');
+        const hashCt = this.calculateHash();
+        const sig = signingKey.sign(hashCt, 'base64');
         this.signature = sig.toDER('hex');
     }
 
@@ -299,7 +312,7 @@ class Contract {
 
         if(this.insurer.length === 0 || this.beneficiary.length === 0) throw new Error('Invalid constructor parameters.');
 
-        if(this.driversEmpty || this.vehiclesEmpty) throw new Error('Make sure there is at least one driver and one vehicle registered.');
+        if(this.driversEmpty() || this.vehiclesEmpty()) throw new Error('Make sure there is at least one driver and one vehicle registered.');
 
         if(this.driverUndeclared()) throw new Error('There is at least an undeclared driver in the contract.');
 
@@ -319,10 +332,10 @@ class Block {
     constructor(index, contracts, prevHash = '') {
         this.index = index;
         this.prevHash = prevHash;
-        this.hash = this.calculateHash();
         this.timestamp = new Date();
         this.nonce = 0;
         this.contracts = contracts;
+        this.hash = this.calculateHash();
     }
 
     /** CALCULATE HASH
@@ -342,12 +355,12 @@ class Block {
      * @param {number} difficulty
      */
     mineBlock(difficulty) {
-        console.log("Mining block " + this.index + "...");
+        //console.log("Mining block " + this.index + "...");
         while (this.hash.substring(0, difficulty) !== Array(difficulty + 1).join("0")) {
             this.nonce++;
             this.hash = this.calculateHash();
         }
-        console.log("Block successfully mined: " + this.hash + '\n');
+        console.log("Block successfully mined: " + this.hash);
     }
 
     /** HAS VALID CONTRACTS
@@ -381,7 +394,7 @@ class Blockchain {
      * @returns {Block}
      */
     createGenesis() {
-        return new Block(0, "Genesis", "0");
+        return new Block(0, [], "0");
     }
 
     /** GET LATEST BLOCK
@@ -424,14 +437,14 @@ class Blockchain {
         this.pendingContracts = [];
     }
 
-    /** CREATE CONTRACT
+    /** ADD CONTRACT
      * Adds a new contract to the list of pending contracts (to be added
      * next time the mining process starts). This verifies that the given
      * contract is properly signed.
      *
      * @param {Contract} contract
      */
-    createContract(contract) {
+    addContract(contract) {
         if(!contract.isValid()) throw new Error('Cannot add invalid contract to the chain.');
 
         if(!contract.acta) {
@@ -489,13 +502,13 @@ class Blockchain {
      * @returns {Contract[]}
      */
     // PROBLEMA DE SEGURANÇA SE A PESSOA NÃO FOR A PRÓPRIA
-    getAllContractsFrom(name, nif) {
+    getAllContractsFrom(pubkey) {
         var contracts = [];
 
         for(const block of this.chain) {
             if(block.index === 0) continue;
             for(const contract of block.contracts) {
-                if(contract.beneficiary.name === name && contract.beneficiary.nif === nif)
+                if(contract.beneficiary.pubkey === pubkey || contract.insurer.pubkey === pubkey)
                     contracts.push(contract);
             }
         }
@@ -526,6 +539,8 @@ class Blockchain {
 
             // Se os restantes blocos foram alterados
             if (currentBlock.prevHash !== prevBlock.hash) return false;
+
+            if(!currentBlock.hasValidContracts()) return false;
         }
 
         return true;
