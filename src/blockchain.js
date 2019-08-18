@@ -310,7 +310,7 @@ class Contract {
     isValid() {
         if(!this.signature || this.signature.length === 0) throw new Error('No signature in this contract.');
 
-        if(this.insurer.length === null || this.beneficiary.length === null) throw new Error('Invalid constructor parameters.');
+        if(this.insurer === null || this.beneficiary === null) throw new Error('Invalid constructor parameters.');
 
         if(this.driversEmpty() || this.vehiclesEmpty()) throw new Error('Make sure there is at least one driver and one vehicle registered.');
 
