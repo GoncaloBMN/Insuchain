@@ -18,6 +18,7 @@ class Contract {
         this.drivers = [];  //List of drivers
         this.premium = 0;
         this.timestamp = new Date();
+        this.latestPolicyID = 0;
     }
 
     /** CALCULATE HASH
@@ -27,7 +28,14 @@ class Contract {
      */
     calculateHash() {
         return sha256(this.policyID + this.acta + JSON.stringify(this.insurer) + JSON.stringify(this.beneficiary) + this.num_vehicles + 
-        JSON.stringify(this.vehicles) + JSON.stringify(this.drivers) + this.premium + this.timestamp).toString();
+        JSON.stringify(this.vehicles) + JSON.stringify(this.drivers) + this.premium + this.timestamp + this.latestPolicyID).toString();
+    }
+
+    setContractPolicyID() {
+        if(!this.acta) {
+            this.policyID = this.latestPolicyID + 1;
+            this.latestPolicyID++;
+        }
     }
 
     /** VEHICLES[] EMPTY
@@ -242,6 +250,8 @@ class Contract {
             return -1;
         }
 
+        this.num_vehicles--;
+
         return this.vehicles.splice(index, 1);
     }
     
@@ -383,7 +393,6 @@ class Block {
 class Blockchain {
     constructor() {
         this.difficulty = 2;
-        this.latestPolicyID = 0;
         this.chain = [this.createGenesis()];
         this.pendingContracts = [];
     }
@@ -447,11 +456,6 @@ class Blockchain {
     addContract(contract) {
         if(!contract.isValid()) throw new Error('Cannot add invalid contract to the chain.');
 
-        if(!contract.acta) {
-            contract.policyID = this.latestPolicyID + 1;
-            this.latestPolicyID++;
-        }
-
         this.pendingContracts.push(contract);
     }
 
@@ -475,6 +479,22 @@ class Blockchain {
         return -1;
     }
 
+    /** PASS CONTRACT INFO
+     * Passes relevant information from the former contract {contract} to the new amendment {newContract}
+     * 
+     * @param {Contract} contract 
+     * @param {Contract} newContract 
+     */
+    passContractInfo(contract, newContract) {
+        newContract.policyID = contract.policyID;
+        newContract.num_vehicles = contract.num_vehicles;
+        newContract.vehicles = [...contract.vehicles];  // Mesmo que .slice()
+        newContract.drivers = [...contract.drivers];    // Mesmo que .slice()
+        newContract.premium = contract.premium;
+        newContract.latestPolicyID = contract.latestPolicyID;
+        newContract.acta = true;
+    }
+
     /** CREATE ACTA
      * Creates an amendment contract with the same policy ID as the former contract
      * 
@@ -484,10 +504,8 @@ class Blockchain {
      * @returns {Contract}
      */
     createACTA(contract, policyID) {
-        if(getContract(policyID, contract.beneficiary.name, contract.benefeciary.nif) === -1) return -1;
+        if(this.getContract(policyID, contract.beneficiary.name, contract.beneficiary.nif) === -1) return -1;
 
-        contract.policyID = policyID;
-        contract.acta = true;
         this.pendingContracts.push(contract);
         
         return contract;
@@ -526,9 +544,11 @@ class Blockchain {
     isChainValid(){
         // Check if the Genesis block hasn't been tampered with by comparing
         // the output of createGenesis with the first block on the chain
-        const realGenesis = JSON.stringify(this.createGenesisBlock());
+        const realGenesis = this.createGenesis();
+        realGenesis.timestamp = this.chain[0].timestamp;
+        realGenesis.calculateHash();
 
-        if (realGenesis !== JSON.stringify(this.chain[0])) return false;
+        if (JSON.stringify(realGenesis) !== JSON.stringify(this.chain[0])) return false;
 
         for (let i = 1; i < this.chain.length; i++) {
             const currentBlock = this.chain[i];
