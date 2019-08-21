@@ -73,14 +73,14 @@ var beneficiary = {
     pubkey: b_pubKey
 }
 
+
+// CREATE CONTRACT
 let Insuchain = new Blockchain();
 let contract = new Contract(insurer, beneficiary);
 
 contract.addVehicle(vehicle_1);
 contract.addDriver(driver_1);
-contract.setContractPolicyID();
-contract.signContract(b_key);
-Insuchain.addContract(contract);
+Insuchain.addContract(contract, b_key);
 Insuchain.minePendingContracts();
 
 // CREATE ACTA
@@ -92,6 +92,14 @@ Insuchain.passContractInfo(contract_info, contract_2);
 contract_2.addVehicle(vehicle_2);
 contract_2.signContract(b_key);
 Insuchain.createACTA(contract_2, contract_2.policyID);
+Insuchain.minePendingContracts();
+
+// ADD ANOTHER CONTRACT,
+// CAN COMMENT LAST minePendingContracts AND PUT BOTH IN THE SAME BLOCK
+let contract_3 = new Contract(insurer, beneficiary);
+contract_3.addVehicle(vehicle_2);
+contract_3.addDriver(driver_1);
+Insuchain.addContract(contract_3, b_key);
 Insuchain.minePendingContracts();
 
 // GET ALL CONTRACTS FROM
