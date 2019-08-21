@@ -1,6 +1,6 @@
 {
   "name": "insuchain-0.4",
-  "version": "1.0.3",
+  "version": "1.0.6",
   "description": "Insuchain contracts",
   "main": "src/blockchain.js",
   "dependencies": {
