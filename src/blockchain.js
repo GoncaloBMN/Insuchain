@@ -18,7 +18,6 @@ class Contract {
         this.drivers = [];  //List of drivers
         this.premium = 0;
         this.timestamp = new Date();
-        this.latestPolicyID = 0;
     }
 
     /** CALCULATE HASH
@@ -29,13 +28,6 @@ class Contract {
     calculateHash() {
         return sha256(this.policyID + this.acta + JSON.stringify(this.insurer) + JSON.stringify(this.beneficiary) + this.num_vehicles + 
         JSON.stringify(this.vehicles) + JSON.stringify(this.drivers) + this.premium + this.timestamp + this.latestPolicyID).toString();
-    }
-
-    setContractPolicyID() {
-        if(!this.acta) {
-            this.policyID = this.latestPolicyID + 1;
-            this.latestPolicyID++;
-        }
     }
 
     /** VEHICLES[] EMPTY
@@ -395,6 +387,7 @@ class Blockchain {
         this.difficulty = 2;
         this.chain = [this.createGenesis()];
         this.pendingContracts = [];
+        this.latestPolicyID = 0;
     }
 
     /** CREATE GENESIS
@@ -453,7 +446,15 @@ class Blockchain {
      *
      * @param {Contract} contract
      */
-    addContract(contract) {
+    addContract(contract, signingKey) {
+        // set policy id
+        if(!contract.acta) {
+            contract.policyID = ++this.latestPolicyID;
+        }
+
+        // sign contract
+        contract.signContract(signingKey);
+
         if(!contract.isValid()) throw new Error('Cannot add invalid contract to the chain.');
 
         this.pendingContracts.push(contract);
