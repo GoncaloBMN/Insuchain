@@ -24,6 +24,7 @@ var vehicle_1 = {
     vin: "XXXXXXXX",
     driver: "Gonçalo Nabais"
 };
+
 var vehicle_2 = {
     brand: "test",
     model: "Corsa C Diesel",
@@ -64,15 +65,14 @@ var insurer = {
     address: "Rua das Tulipas",
     nif: "500",
     pubkey: i_pubKey
-}
+};
 
 var beneficiary = {
     name: "Very Big Company",
     address: "Rua das Palmeiras",
     nif: "501",
     pubkey: b_pubKey
-}
-
+};
 
 // CREATE CONTRACT
 let Insuchain = new Blockchain();
@@ -105,3 +105,6 @@ Insuchain.minePendingContracts();
 // GET ALL CONTRACTS FROM
 let contract_from = Insuchain.getAllContractsFrom(b_pubKey);
 console.log(contract_from);
+
+let peer_info_b = Insuchain.getPeerInfo(contract_from, b_pubKey);
+console.log(peer_info_b);
