@@ -108,25 +108,25 @@ class Contract {
      * @returns {boolean}
      */
     driverUndeclared(log = false /*LOG false by default if parameter not specified*/) {
-        var check = false;
-
         if(!this.vehiclesEmpty() && this.driversEmpty()) {
             if(log) console.log("List of drivers is empty.");
             return true;
         }
-
+        
         for(const vehicle of this.vehicles) {
             if(this.vehicleHasDriver(vehicle)) {
+                var driverFound = false;
                 for(const driver of this.drivers) {
-                    if(vehicle.driver !== driver.name) {
-                        check = true;
-                        if(log) console.log("Driver " + vehicle.driver + " of " + vehicle.brand + ' ' + vehicle.version + " (license place: " + vehicle.license_place + ')' + " not declared.");
-                    }
+                    if(vehicle.driver === driver.name) driverFound = true;
+                }
+                if(!driverFound) {
+                    if(log) console.log("Driver " + vehicle.driver + " of " + vehicle.brand + ' ' + vehicle.version + " (license place: " + vehicle.license_place + ')' + " not declared.");
+                    return true;
                 }
             }
         }
 
-        return check;
+        return false;
     }
 
     /** GET VEHICLE INDEX BY VIN
@@ -469,10 +469,29 @@ class Blockchain {
      * 
      * @returns {Contract}
      */
+    /*
     getContract(policyID, name, nif) {
         for(const block of this.chain) {
             for(const contract of block.contracts) {
                 if(contract.policyID === policyID && contract.beneficiary.name === name && contract.beneficiary.nif === nif) return contract;
+            }
+        }
+
+        console.log("Contract not found.");
+        return -1;
+    }*/
+
+    /** GET CONTRACT
+     * Returns the contract given by policy ID if found
+     * 
+     * @param {number} policyID 
+     * 
+     * @returns {Contract}
+     */
+    getContract(policyID) {
+        for(const block of this.chain) {
+            for(const contract of block.contracts) {
+                if(contract.policyID === policyID) return contract;
             }
         }
 
@@ -533,6 +552,31 @@ class Blockchain {
         }
 
         return contracts;
+    }
+
+    /** GET PEER INFO
+     * Returns the object peer, of the requested peerAddress
+     * 
+     * @param {Contract[]} contracts 
+     * @param {string} peerAddress 
+     * 
+     * @returns {object}
+     */
+    getPeerInfo(contracts, peerAddress) {
+        var peer_info;
+        
+        for(var i = contracts.length - 1; i >= 0; i--) {
+            if(contracts[i].insurer.pubkey === peerAddress) {
+                peer_info = contracts[i].insurer;
+                break;
+            }
+            if(contracts[i].beneficiary.pubkey === peerAddress) {
+                peer_info = contracts[i].beneficiary;
+                break;
+            }
+        }
+
+        return peer_info;
     }
 
     /** IS CHAIN VALID
