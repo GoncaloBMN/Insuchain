@@ -1,11 +1,12 @@
 {
   "name": "insuchain-0.4",
-  "version": "1.0.8",
+  "version": "1.0.10",
   "description": "Insuchain contracts",
   "main": "src/blockchain.js",
   "dependencies": {
     "crypto-js": "3.1.9-1",
-    "elliptic": "6.5.0"
+    "elliptic": "6.5.0",
+    "ipfs": "0.37.1"
   },
   "devDependencies": {},
   "scripts": {
