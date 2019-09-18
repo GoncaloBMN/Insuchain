@@ -10,7 +10,7 @@ class Contract {
      */
     constructor(insurer, beneficiary) {
         this.policyID = 0;
-        this.acta = false;
+        this.endorsement = false;
         this.insurer = insurer; //Insurance company
         this.beneficiary = beneficiary; //Beneficiary of the contract
         this.num_vehicles = 0;   //Number of vehicles to insure
@@ -27,7 +27,7 @@ class Contract {
      */
     calculateHash() {
         return sha256(this.policyID + this.acta + JSON.stringify(this.insurer) + JSON.stringify(this.beneficiary) + this.num_vehicles + 
-        JSON.stringify(this.vehicles) + JSON.stringify(this.drivers) + this.premium + this.timestamp + this.latestPolicyID).toString();
+        JSON.stringify(this.vehicles) + JSON.stringify(this.drivers) + this.premium + this.timestamp).toString();
     }
 
     /** VEHICLES[] EMPTY
@@ -291,8 +291,8 @@ class Contract {
      */
     signContract(signingKey) {
         // You can only send a contract from the wallet that is linked to your
-        // key. So here we check if the beneficiary.pubkey matches your publicKey
-        if(signingKey.getPublic('hex') !== this.beneficiary.pubkey) {
+        // key. So here we check if the insurer.pubkey matches your publicKey
+        if(signingKey.getPublic('hex') !== this.insurer.pubkey) {
             throw new Error('You cannot sign contracts that aren\'t yours.');
         }
 
@@ -319,7 +319,7 @@ class Contract {
         if(this.driverUndeclared()) throw new Error('There is at least an undeclared driver in the contract.');
 
         // Verify if is signed with correct key
-        const publicKey = ec.keyFromPublic(this.beneficiary.pubkey, 'hex');
+        const publicKey = ec.keyFromPublic(this.insurer.pubkey, 'hex');
         return publicKey.verify(this.calculateHash(), this.signature);
     }
 }
@@ -489,12 +489,22 @@ class Blockchain {
      * @returns {Contract}
      */
     getContract(policyID) {
+        for(let i = this.chain.length - 1; i >= 0; i--) {
+            const block = this.chain[i];
+
+            for(let j = block.contracts.length - 1; j >= 0; j--) {
+                const contract = block.contracts[j];
+
+                if (contract.policyID === policyID) return contract;
+            }
+        }
+        /*
         for(const block of this.chain) {
             for(const contract of block.contracts) {
                 if(contract.policyID === policyID) return contract;
             }
         }
-
+        */
         console.log("Contract not found.");
         return -1;
     }
@@ -511,7 +521,7 @@ class Blockchain {
         newContract.vehicles = [...contract.vehicles];  // Mesmo que .slice()
         newContract.drivers = [...contract.drivers];    // Mesmo que .slice()
         newContract.premium = contract.premium;
-        newContract.latestPolicyID = contract.latestPolicyID;
+        newContract.timestamp = contract.timestamp;
         newContract.acta = true;
     }
 
