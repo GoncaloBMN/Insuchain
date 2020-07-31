@@ -5,7 +5,7 @@
   "main": "src/blockchain.js",
   "dependencies": {
     "crypto-js": "3.1.9-1",
-    "elliptic": "6.5.0",
+    "elliptic": "6.5.3",
     "ipfs": "0.37.1"
   },
   "devDependencies": {},
